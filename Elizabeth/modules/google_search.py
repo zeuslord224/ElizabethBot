@@ -35,14 +35,15 @@ async def is_register_admin(chat, user):
         return None
 
 
-@register(pattern="^/google (.*)") 
+@register(pattern="^/google (.*)")
 async def _(event):
     if event.fwd_from:
         return
-    if event.is_group:
-     if not (await is_register_admin(event.input_chat, event.message.sender_id)):
-       await event.reply("😜 Heya,You are not admin or mod 🥺.So you can't do this command in this chat 😅.But you can use me in pm😁")
-       return
+    if event.is_group and not (
+        await is_register_admin(event.input_chat, event.message.sender_id)
+    ):
+        await event.reply("😜 Heya,You are not admin or mod 🥺.So you can't do this command in this chat 😅.But you can use me in pm😁")
+        return
     # SHOW_DESCRIPTION = False
     input_str = event.pattern_match.group(1) # + " -inurl:(htm|html|php|pls|txt) intitle:index.of \"last modified\" (mkv|mp4|avi|epub|pdf|mp3)"
     input_url = "https://bots.shrimadhavuk.me/search/?q={}".format(input_str)
@@ -54,7 +55,7 @@ async def _(event):
         url = result.get("url")
         description = result.get("description")
         last = html2text.html2text(description)
-        output_str += "[{}]({})\n{}\n".format(text, url, last)       
+        output_str += "[{}]({})\n{}\n".format(text, url, last)
     await event.reply("{}".format(output_str), link_preview=False, parse_mode='Markdown')
 
 

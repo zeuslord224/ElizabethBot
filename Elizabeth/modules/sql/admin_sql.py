@@ -35,8 +35,7 @@ def set_permapin(chat_id, message_id):
 
 def get_permapin(chat_id):
     try:
-        permapin = SESSION.query(PermanentPin).get(str(chat_id))
-        if permapin:
+        if permapin := SESSION.query(PermanentPin).get(str(chat_id)):
             return permapin.message_id
         return 0
     finally:

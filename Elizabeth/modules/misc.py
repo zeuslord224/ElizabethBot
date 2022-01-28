@@ -50,8 +50,7 @@ from Elizabeth.modules.sql.afk_sql import is_afk
 @typing_action
 def get_id(update, context):
     args = context.args
-    user_id = extract_user(update.effective_message, args)
-    if user_id:
+    if user_id := extract_user(update.effective_message, args):
         if (
             update.effective_message.reply_to_message
             and update.effective_message.reply_to_message.forward_from
@@ -144,36 +143,28 @@ def info(update, context):
     )
 
     if chat.type != "private":
-        status = context.bot.get_chat_member(chat.id, user.id).status
-        if status:
+        if status := context.bot.get_chat_member(chat.id, user.id).status:
             _stext = "\n<b>Status:</b> <code>{}</code>"
 
-        afk_st = is_afk(user.id)
-        if afk_st:
+        if afk_st := is_afk(user.id):
             text += _stext.format("Away From Keyboard")
-        else:
-            status = context.bot.get_chat_member(chat.id, user.id).status
-            if status:
-                if status in {"left", "kicked"}:
-                    text += _stext.format("Absent")
-                elif status == "member":
-                    text += _stext.format("Present")
-                elif status in {"administrator", "creator"}:
-                    text += _stext.format("Admin")
+        elif status := context.bot.get_chat_member(chat.id, user.id).status:
+            if status in {"left", "kicked"}:
+                text += _stext.format("Absent")
+            elif status == "member":
+                text += _stext.format("Present")
+            elif status in {"administrator", "creator"}:
+                text += _stext.format("Admin")
 
     try:
-        sw = spamwtc.get_ban(int(user.id))
-        if sw:
+        if sw := spamwtc.get_ban(int(user.id)):
             text += "\n\n<b>This person is banned in Spamwatch!</b>"
             text += f"\n<b>Reason:</b> <pre>{sw.reason}</pre>"
             text += "\nAppeal at @SpamWatchSupport"
-        else:
-            pass
     except BaseException:
         pass  # don't crash if api is down somehow...
 
-    cas_banned = check_cas(user.id)
-    if cas_banned:
+    if cas_banned := check_cas(user.id):
         text += "\n\n<b>This Person is CAS Banned!</b>"
         text += f"\n<b>Reason: </b> <a href='{cas_banned}'>CAS Banned</a>"
         text += "\nAppeal at @cas_discussion"
@@ -210,7 +201,7 @@ def info(update, context):
 
     try:
         memstatus = chat.get_member(user.id).status
-        if memstatus == "administrator" or memstatus == "creator":
+        if memstatus in ["administrator", "creator"]:
             result = context.bot.get_chat_member(chat.id, user.id)
             if result.custom_title:
                 text += f"\n\nThis user has custom title <b>{result.custom_title}</b> in this chat."
@@ -322,7 +313,7 @@ def markdown_help(update, context):
 def wiki(update, context):
     kueri = re.split(pattern="wiki", string=update.effective_message.text)
     wikipedia.set_lang("en")
-    if len(str(kueri[1])) == 0:
+    if not str(kueri[1]):
         update.effective_message.reply_text("Enter keywords!")
     else:
         try:
@@ -399,8 +390,7 @@ def lyrics(update, context):
         msg.reply_text("You haven't specified which song to look for!")
         return
     else:
-        song = Song.find_song(query)
-        if song:
+        if song := Song.find_song(query):
             if song.lyrics:
                 reply = song.format()
             else:
@@ -427,11 +417,7 @@ def wall(update, context):
     msg = update.effective_message
     msg_id = update.effective_message.message_id
     args = context.args
-    query = " ".join(args)
-    if not query:
-        msg.reply_text("Please enter a query!")
-        return
-    else:
+    if query := " ".join(args):
         caption = query
         term = query.replace(" ", "%20")
         json_rep = r.get(
@@ -440,39 +426,39 @@ def wall(update, context):
         if not json_rep.get("success"):
             msg.reply_text("An error occurred!")
 
+        elif wallpapers := json_rep.get("wallpapers"):
+            index = randint(0, len(wallpapers) - 1)  # Choose random index
+            wallpaper = wallpapers[index]
+            wallpaper = wallpaper.get("url_image")
+            wallpaper = wallpaper.replace("\\", "")
+            context.bot.send_photo(
+                chat_id,
+                photo=wallpaper,
+                caption="Preview",
+                reply_to_message_id=msg_id,
+                timeout=60,
+            )
+            context.bot.send_document(
+                chat_id,
+                document=wallpaper,
+                filename="wallpaper",
+                caption=caption,
+                reply_to_message_id=msg_id,
+                timeout=60,
+            )
         else:
-            wallpapers = json_rep.get("wallpapers")
-            if not wallpapers:
-                msg.reply_text("No results found! Refine your search.")
-                return
-            else:
-                index = randint(0, len(wallpapers) - 1)  # Choose random index
-                wallpaper = wallpapers[index]
-                wallpaper = wallpaper.get("url_image")
-                wallpaper = wallpaper.replace("\\", "")
-                context.bot.send_photo(
-                    chat_id,
-                    photo=wallpaper,
-                    caption="Preview",
-                    reply_to_message_id=msg_id,
-                    timeout=60,
-                )
-                context.bot.send_document(
-                    chat_id,
-                    document=wallpaper,
-                    filename="wallpaper",
-                    caption=caption,
-                    reply_to_message_id=msg_id,
-                    timeout=60,
-                )
+            msg.reply_text("No results found! Refine your search.")
+            return
+    else:
+        msg.reply_text("Please enter a query!")
+        return
 
 
 @run_async
 @typing_action
 def getlink(update, context):
-    args = context.args
     message = update.effective_message
-    if args:
+    if args := context.args:
         pattern = re.compile(r"-\d+")
     else:
         message.reply_text("You don't seem to be referring to any chats.")
@@ -574,10 +560,10 @@ def stats(update, context):
 @typing_action
 def covid(update, context):
     message = update.effective_message
-    country = str(message.text[len(f"/covid "):])
+    country = str(message.text[len('/covid '):])
     data = Covid(source="worldometers")
 
-    if country == "":
+    if not country:
         country = "world"
         link = "https://www.worldometers.info/coronavirus"
     elif country.lower() in ["south korea", "korea"]:

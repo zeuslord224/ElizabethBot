@@ -49,9 +49,7 @@ def mute(update, context):
         message.reply_text("Yeahh... I'm not muting myself!")
         return ""
 
-    member = chat.get_member(int(user_id))
-
-    if member:
+    if member := chat.get_member(int(user_id)):
         if is_user_admin(chat, user_id, member=member):
             message.reply_text(
                 "Well i'm not gonna stop an admin from talking!")
@@ -104,45 +102,44 @@ def unmute(update, context):
 
     member = chat.get_member(int(user_id))
 
-    if member.status != "kicked" and member.status != "left":
-        if (
+    if member.status in ["kicked", "left"]:
+        message.reply_text(
+            "This user isn't even in the chat, unmuting them won't make them talk more than they "
+            "already do!")
+
+    elif (
             member.can_send_messages
             and member.can_send_media_messages
             and member.can_send_other_messages
             and member.can_add_web_page_previews
         ):
-            message.reply_text("This user already has the right to speak.")
-        else:
-            context.bot.restrict_chat_member(
-                chat.id,
-                int(user_id),
-                permissions=ChatPermissions(
-                    can_send_messages=True,
-                    can_invite_users=True,
-                    can_pin_messages=True,
-                    can_send_polls=True,
-                    can_change_info=True,
-                    can_send_media_messages=True,
-                    can_send_other_messages=True,
-                    can_add_web_page_previews=True,
-                ),
-            )
-            message.reply_text("Yep! this user can start talking again...")
-            return (
-                "<b>{}:</b>"
-                "\n#UNMUTE"
-                "\n<b>Admin:</b> {}"
-                "\n<b>User:</b> {}".format(
-                    html.escape(chat.title),
-                    mention_html(user.id, user.first_name),
-                    mention_html(member.user.id, member.user.first_name),
-                )
-            )
+        message.reply_text("This user already has the right to speak.")
     else:
-        message.reply_text(
-            "This user isn't even in the chat, unmuting them won't make them talk more than they "
-            "already do!")
-
+        context.bot.restrict_chat_member(
+            chat.id,
+            int(user_id),
+            permissions=ChatPermissions(
+                can_send_messages=True,
+                can_invite_users=True,
+                can_pin_messages=True,
+                can_send_polls=True,
+                can_change_info=True,
+                can_send_media_messages=True,
+                can_send_other_messages=True,
+                can_add_web_page_previews=True,
+            ),
+        )
+        message.reply_text("Yep! this user can start talking again...")
+        return (
+            "<b>{}:</b>"
+            "\n#UNMUTE"
+            "\n<b>Admin:</b> {}"
+            "\n<b>User:</b> {}".format(
+                html.escape(chat.title),
+                mention_html(user.id, user.first_name),
+                mention_html(member.user.id, member.user.first_name),
+            )
+        )
     return ""
 
 
@@ -173,12 +170,11 @@ def temp_mute(update, context):
     try:
         member = chat.get_member(user_id)
     except BadRequest as excp:
-        if excp.message == "User not found":
-            message.reply_text("I can't seem to find this user")
-            return ""
-        else:
+        if excp.message != "User not found":
             raise
 
+        message.reply_text("I can't seem to find this user")
+        return ""
     if is_user_admin(chat, user_id, member):
         message.reply_text("I really wish I could mute admins...")
         return ""
@@ -195,11 +191,7 @@ def temp_mute(update, context):
     split_reason = reason.split(None, 1)
 
     time_val = split_reason[0].lower()
-    if len(split_reason) > 1:
-        reason = split_reason[1]
-    else:
-        reason = ""
-
+    reason = split_reason[1] if len(split_reason) > 1 else ""
     mutetime = extract_time(message, time_val)
 
     if not mutetime:

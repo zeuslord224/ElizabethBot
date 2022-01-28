@@ -34,10 +34,11 @@ GMAPS_LOC = "https://maps.googleapis.com/maps/api/geocode/json"
 async def _(event):
     if event.fwd_from:
         return
-    if event.is_group:
-     if not (await is_register_admin(event.input_chat, event.message.sender_id)):
-       await event.reply("😜Heya,You are not admin or mod 🥺.So you can't do this command in this chat 😅.But you can use me in pm😁")
-       return
+    if event.is_group and not (
+        await is_register_admin(event.input_chat, event.message.sender_id)
+    ):
+        await event.reply("😜Heya,You are not admin or mod 🥺.So you can't do this command in this chat 😅.But you can use me in pm😁")
+        return
 
     args = event.pattern_match.group(1)
 

@@ -22,9 +22,8 @@ from Elizabeth.modules.helper_funcs.filters import CustomFilters
 @run_async
 @typing_action
 def leavechat(update, context):
-    args = context.args
     msg = update.effective_message
-    if args:
+    if args := context.args:
         chat_id = int(args[0])
 
     else:

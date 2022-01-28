@@ -28,10 +28,11 @@ async def is_register_admin(chat, user):
 
 @register(pattern="^/app (.*)")
 async def apk(e):
-    if e.is_group:
-     if not (await is_register_admin(e.input_chat, e.message.sender_id)):
-          await e.reply("🙄 You are not admin here.. Use me in pm 🤗")
-          return
+    if e.is_group and not (
+        await is_register_admin(e.input_chat, e.message.sender_id)
+    ):
+        await e.reply("🙄 You are not admin here.. Use me in pm 🤗")
+        return
     try:
         app_name = e.pattern_match.group(1)
         remove_space = app_name.split(' ')

@@ -47,12 +47,11 @@ def ban(update, context):
     try:
         member = chat.get_member(user_id)
     except BadRequest as excp:
-        if excp.message == "User not found":
-            message.reply_text("I can't seem to find this user")
-            return ""
-        else:
+        if excp.message != "User not found":
             raise
 
+        message.reply_text("I can't seem to find this user")
+        return ""
     if is_user_ban_protected(chat, user_id, member):
         message.reply_text(
             "I'm not gonna ban an admin, don't make fun of yourself!")
@@ -134,12 +133,11 @@ def temp_ban(update, context):
     try:
         member = chat.get_member(user_id)
     except BadRequest as excp:
-        if excp.message == "User not found":
-            message.reply_text("I can't seem to find this user")
-            return ""
-        else:
+        if excp.message != "User not found":
             raise
 
+        message.reply_text("I can't seem to find this user")
+        return ""
     if is_user_ban_protected(chat, user_id, member):
         message.reply_text("Wow! let's start banning Admins themselves?...")
         return ""
@@ -156,11 +154,7 @@ def temp_ban(update, context):
     split_reason = reason.split(None, 1)
 
     time_val = split_reason[0].lower()
-    if len(split_reason) > 1:
-        reason = split_reason[1]
-    else:
-        reason = ""
-
+    reason = split_reason[1] if len(split_reason) > 1 else ""
     bantime = extract_time(message, time_val)
 
     if not bantime:
@@ -235,12 +229,11 @@ def kick(update, context):
     try:
         member = chat.get_member(user_id)
     except BadRequest as excp:
-        if excp.message == "User not found":
-            message.reply_text("I can't seem to find this user")
-            return ""
-        else:
+        if excp.message != "User not found":
             raise
 
+        message.reply_text("I can't seem to find this user")
+        return ""
     if is_user_ban_protected(chat, user_id):
         message.reply_text("Yeahh... let's start kicking admins?")
         return ""
@@ -249,8 +242,7 @@ def kick(update, context):
         message.reply_text("Yeahhh I'm not gonna do that")
         return ""
 
-    res = chat.unban_member(user_id)  # unban on current user = kick
-    if res:
+    if res := chat.unban_member(user_id):
         # context.bot.send_sticker(chat.id, BAN_STICKER)  # banhammer marie
         # sticker
         context.bot.sendMessage(
@@ -295,17 +287,15 @@ def banme(update, context):
         update.effective_message.reply_text("Yeahhh.. not gonna ban an admin.")
         return
 
-    res = update.effective_chat.kick_member(user_id)
-    if res:
+    if res := update.effective_chat.kick_member(user_id):
         update.effective_message.reply_text("Yes, you're right! GTFO..")
-        log = ("<b>{}:</b>"
+        return ("<b>{}:</b>"
                "\n#BANME"
                "\n<b>User:</b> {}"
                "\n<b>ID:</b> <code>{}</code>".format(html.escape(chat.title),
                                                      mention_html(user.id,
                                                                   user.first_name),
                                                      user_id))
-        return log
 
     else:
         update.effective_message.reply_text("Huh? I can't :/")
@@ -322,9 +312,7 @@ def kickme(update, context):
             "Yeahhh.. not gonna kick an admin.")
         return
 
-    res = update.effective_chat.unban_member(
-        user_id)  # unban on current user = kick
-    if res:
+    if res := update.effective_chat.unban_member(user_id):
         update.effective_message.reply_text("Yeah, you're right Get Out!..")
     else:
         update.effective_message.reply_text("Huh? I can't :/")
@@ -355,12 +343,11 @@ def unban(update, context):
     try:
         member = chat.get_member(user_id)
     except BadRequest as excp:
-        if excp.message == "User not found":
-            message.reply_text("I can't seem to find this user")
-            return ""
-        else:
+        if excp.message != "User not found":
             raise
 
+        message.reply_text("I can't seem to find this user")
+        return ""
     if user_id == context.bot.id:
         message.reply_text("How would I unban myself if I wasn't here...?")
         return ""

@@ -43,8 +43,7 @@ def slap(update, context):
             msg.from_user.first_name, msg.from_user.id
         )
 
-    user_id = extract_user(update.effective_message, args)
-    if user_id:
+    if user_id := extract_user(update.effective_message, args):
         slapped_user = context.bot.get_chat(user_id)
         user1 = curr_user
         if slapped_user.username:
@@ -54,7 +53,6 @@ def slap(update, context):
                 slapped_user.first_name, slapped_user.id
             )
 
-    # if no target found, bot targets the sender
     else:
         user1 = "[{}](tg://user?id={})".format(context.bot.first_name,
                                                context.bot.id)
@@ -93,8 +91,7 @@ def punch(update, context):
             msg.from_user.first_name, msg.from_user.id
         )
 
-    user_id = extract_user(update.effective_message, args)
-    if user_id:
+    if user_id := extract_user(update.effective_message, args):
         punched_user = context.bot.get_chat(user_id)
         user1 = curr_user
         if punched_user.username:
@@ -104,7 +101,6 @@ def punch(update, context):
                 punched_user.first_name, punched_user.id
             )
 
-    # if no target found, bot targets the sender
     else:
         user1 = "[{}](tg://user?id={})".format(context.bot.first_name,
                                                context.bot.id)
@@ -146,8 +142,7 @@ def hug(update, context):
             msg.from_user.first_name, msg.from_user.id
         )
 
-    user_id = extract_user(update.effective_message, args)
-    if user_id:
+    if user_id := extract_user(update.effective_message, args):
         hugged_user = context.bot.get_chat(user_id)
         user1 = curr_user
         if hugged_user.username:
@@ -157,7 +152,6 @@ def hug(update, context):
                 hugged_user.first_name, hugged_user.id
             )
 
-    # if no target found, bot targets the sender
     else:
         user1 = "Awwh! [{}](tg://user?id={})".format(
             context.bot.first_name, context.bot.id
@@ -354,10 +348,7 @@ def copypasta(update, context):
             elif c.lower() == b_char:
                 reply_text += "🅱️"
             else:
-                if bool(random.getrandbits(1)):
-                    reply_text += c.upper()
-                else:
-                    reply_text += c.lower()
+                reply_text += c.upper() if bool(random.getrandbits(1)) else c.lower()
         reply_text += random.choice(emojis)
         message.reply_to_message.reply_text(reply_text)
 

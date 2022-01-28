@@ -151,12 +151,10 @@ def warn(
 def button(update, context):
     query = update.callback_query
     user = update.effective_user
-    match = re.match(r"rm_warn\((.+?)\)", query.data)
-    if match:
+    if match := re.match(r"rm_warn\((.+?)\)", query.data):
         user_id = match.group(1)
         chat = update.effective_chat
-        res = sql.remove_warn(user_id, chat.id)
-        if res:
+        if res := sql.remove_warn(user_id, chat.id):
             update.effective_message.edit_text(
                 "Last warn removed by {}.".format(
                     mention_html(user.id, user.first_name)
@@ -225,9 +223,7 @@ def reset_warns(update, context):
     chat = update.effective_chat
     user = update.effective_user
     args = context.args
-    user_id = extract_user(message, args)
-
-    if user_id:
+    if user_id := extract_user(message, args):
         sql.reset_warns(user_id, chat.id)
         message.reply_text("Warnings have been reset!")
         warned = chat.get_member(user_id).user
@@ -257,9 +253,7 @@ def remove_warns(update, context):
     chat = update.effective_chat
     user = update.effective_user
     args = context.args
-    user_id = extract_user(message, args)
-
-    if user_id:
+    if user_id := extract_user(message, args):
         sql.remove_warn(user_id, chat.id)
         message.reply_text("Last warn has been removed!")
         warned = chat.get_member(user_id).user
@@ -296,32 +290,31 @@ def warns(update, context):
     else:
         if chat.type == "private":
             return
-        else:
-            chat_id = update.effective_chat.id
-            chat_name = chat.title
+        chat_id = update.effective_chat.id
+        chat_name = chat.title
 
     result = sql.get_warns(user_id, chat_id)
 
-    num = 1
     if result and result[0] != 0:
         num_warns, reasons = result
         limit, _ = sql.get_warn_setting(chat_id)
 
         if reasons:
-            if conn:
-                text = "This user has {}/{} warnings, in *{}* for the following reasons:".format(
-                    num_warns, limit, chat_name)
-            else:
-                text = (
+            text = (
+                "This user has {}/{} warnings, in *{}* for the following reasons:".format(
+                    num_warns, limit, chat_name
+                )
+                if conn
+                else (
                     "This user has {}/{} warnings, for the following reasons:".format(
                         num_warns,
                         limit,
                     )
                 )
-            for reason in reasons:
-                text += "\n {}. {}".format(num, reason)
-                num += 1
+            )
 
+            for num, reason in enumerate(reasons, start=1):
+                text += "\n {}. {}".format(num, reason)
             msgs = split_message(text)
             for msg in msgs:
                 update.effective_message.reply_text(msg, parse_mode="markdown")
@@ -344,30 +337,27 @@ def add_warn_filter(update, context):
         None, 1
     )  # use python's maxsplit to separate Cmd, keyword, and reply_text
 
-    conn = connected(context.bot, update, chat, user.id, need_admin=True)
-    if conn:
+    if conn := connected(context.bot, update, chat, user.id, need_admin=True):
         chat_id = conn
         chat_name = dispatcher.bot.getChat(conn).title
     else:
         if chat.type == "private":
             return
-        else:
-            chat_id = update.effective_chat.id
-            chat_name = chat.title
+        chat_id = update.effective_chat.id
+        chat_name = chat.title
 
     if len(args) < 2:
         return
 
     extracted = split_quotes(args[1])
 
-    if len(extracted) >= 2:
-        # set trigger -> lower, so as to avoid adding duplicate filters with
-        # different cases
-        keyword = extracted[0].lower()
-        content = extracted[1]
-
-    else:
+    if len(extracted) < 2:
         return
+
+    # set trigger -> lower, so as to avoid adding duplicate filters with
+    # different cases
+    keyword = extracted[0].lower()
+    content = extracted[1]
 
     # Note: perhaps handlers can be removed somehow using sql.get_chat_filters
     for handler in dispatcher.handlers.get(WARN_HANDLER_GROUP, []):
@@ -389,14 +379,12 @@ def remove_warn_filter(update, context):
     user = update.effective_user
     msg = update.effective_message
 
-    conn = connected(context.bot, update, chat, user.id, need_admin=True)
-    if conn:
+    if conn := connected(context.bot, update, chat, user.id, need_admin=True):
         chat_id = conn
+    elif chat.type == "private":
+        return
     else:
-        if chat.type == "private":
-            return
-        else:
-            chat_id = update.effective_chat.id
+        chat_id = update.effective_chat.id
 
     args = msg.text.split(
         None, 1
@@ -434,14 +422,12 @@ def list_warn_filters(update, context):
     chat = update.effective_chat
     user = update.effective_user
 
-    conn = connected(context.bot, update, chat, user.id, need_admin=True)
-    if conn:
+    if conn := connected(context.bot, update, chat, user.id, need_admin=True):
         chat_id = conn
+    elif chat.type == "private":
+        return
     else:
-        if chat.type == "private":
-            return
-        else:
-            chat_id = update.effective_chat.id
+        chat_id = update.effective_chat.id
 
     all_handlers = sql.get_chat_warn_triggers(chat_id)
 
@@ -460,7 +446,7 @@ def list_warn_filters(update, context):
         else:
             filter_list += entry
 
-    if not filter_list == CURRENT_WARNING_FILTER_STRING:
+    if filter_list != CURRENT_WARNING_FILTER_STRING:
         update.effective_message.reply_text(
             filter_list, parse_mode=ParseMode.HTML)
 
@@ -495,16 +481,14 @@ def set_warn_limit(update, context) -> str:
     msg = update.effective_message
     args = context.args
 
-    conn = connected(context.bot, update, chat, user.id, need_admin=True)
-    if conn:
+    if conn := connected(context.bot, update, chat, user.id, need_admin=True):
         chat_id = conn
         chat_name = dispatcher.bot.getChat(conn).title
     else:
         if chat.type == "private":
             return
-        else:
-            chat_id = update.effective_chat.id
-            chat_name = chat.title
+        chat_id = update.effective_chat.id
+        chat_name = chat.title
 
     if args:
         if args[0].isdigit():
@@ -548,16 +532,14 @@ def set_warn_strength(update, context):
     msg = update.effective_message
     args = context.args
 
-    conn = connected(context.bot, update, chat, user.id, need_admin=True)
-    if conn:
+    if conn := connected(context.bot, update, chat, user.id, need_admin=True):
         chat_id = conn
         chat_name = dispatcher.bot.getChat(conn).title
     else:
         if chat.type == "private":
             return
-        else:
-            chat_id = update.effective_chat.id
-            chat_name = chat.title
+        chat_id = update.effective_chat.id
+        chat_name = chat.title
 
     if args:
         if args[0].lower() in ("on", "yes"):
@@ -615,7 +597,7 @@ def __stats__():
 
 def __import_data__(chat_id, data):
     for user_id, count in data.get("warns", {}).items():
-        for x in range(int(count)):
+        for _ in range(int(count)):
             sql.warn_user(user_id, chat_id)
 
 

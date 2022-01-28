@@ -130,11 +130,9 @@ def export_data(update, context):
     chat_id = update.effective_chat.id
     chat = update.effective_chat
     current_chat_id = update.effective_chat.id
-    conn = connected(context.bot, update, chat, user.id, need_admin=True)
-    if conn:
+    if conn := connected(context.bot, update, chat, user.id, need_admin=True):
         chat = dispatcher.bot.getChat(conn)
         chat_id = conn
-        # chat_name = dispatcher.bot.getChat(conn).title
     else:
         if update.effective_message.chat.type == "private":
             update.effective_message.reply_text(
@@ -143,8 +141,6 @@ def export_data(update, context):
             return ""
         chat = update.effective_chat
         chat_id = update.effective_chat.id
-        # chat_name = update.effective_message.chat.title
-
     jam = time.time()
     new_jam = jam + 10800
     checkchat = get_chat(chat_id, chat_data)
@@ -163,9 +159,8 @@ def export_data(update, context):
         else:
             if user.id != OWNER_ID or user.id not in DEV_USERS:
                 put_chat(chat_id, new_jam, chat_data)
-    else:
-        if user.id != OWNER_ID or user.id not in DEV_USERS:
-            put_chat(chat_id, new_jam, chat_data)
+    elif user.id != OWNER_ID or user.id not in DEV_USERS:
+        put_chat(chat_id, new_jam, chat_data)
 
     note_list = sql.get_all_chat_notes(chat_id)
     backup = {}
@@ -355,18 +350,14 @@ def export_data(update, context):
 # Temporary data
 def put_chat(chat_id, value, chat_data):
     # print(chat_data)
-    if not value:
-        status = False
-    else:
-        status = True
+    status = bool(value)
     chat_data[chat_id] = {"backups": {"status": status, "value": value}}
 
 
 def get_chat(chat_id, chat_data):
     # print(chat_data)
     try:
-        value = chat_data[chat_id]["backups"]
-        return value
+        return chat_data[chat_id]["backups"]
     except KeyError:
         return {"status": False, "value": False}
 
